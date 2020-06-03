@@ -1,0 +1,101 @@
+asyncapi: 2.0.0
+info:
+  title: bintel cloud socket.io API
+  version: '1.0.0'
+  description: |
+    Provides documentation for the socket.io API of bintel portal. Allows client application to listen for live updates.
+
+servers:
+  production:
+    url: portal.bintel.se
+    protocol: socket.io
+    description: Production server
+
+  development:
+    url: localhost:3000
+    protocol: socket.io
+    description: Development server
+
+defaultContentType: application/json
+
+channels:
+  join:
+    description: Join room to listen for organization changes. Will also automaticaly join user specific room to receive changes to user.
+    publish:
+      operationId: join
+      message:
+        $ref: '#/components/messages/join'
+
+  leave:
+    description: Leave all rooms.
+    publish:
+      operationId: leave
+      message:
+        $ref: '#/components/messages/empty'        
+
+  event:
+    description: Receive a change event.
+    subscribe:
+      operationId: event
+      message:
+        $ref: '#/components/messages/event'
+
+components:
+  messages:
+    join:
+      name: join
+      title: Join
+      summary: Join information.
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/joinPayload"
+    event:
+      name: event
+      title: Event
+      summary: Change event.
+      payload:
+        $ref: "#/components/schemas/eventPayload"
+    empty:
+      name: empty
+      title: Empty
+      summary: Empty message
+      payload:
+        type: string
+
+  schemas:
+    joinPayload:
+      type: object
+      required: ['token']
+      properties:
+        token:
+          type: string
+          description: User authentication token.
+        organization:
+          type: string
+          description: API id of organization to subscribe to.
+
+    eventPayload:
+      type: object
+      additionalProperties: false
+      required: ['event', 'type', 'id']
+      properties:
+        event:
+          description: Type of change.
+          type: string
+          enum:
+            - update
+            - remove
+        type:
+          description: What type of item changed.
+          type: string
+          enum:
+            - area
+            - device
+            - location
+            - object
+            - object-event
+            - organization
+            - user
+        id:
+          description: API id of item that changed.
+          type: string
